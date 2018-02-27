@@ -56,7 +56,7 @@ void setup()
   rtc.halt(false);
   //以下仅用于重置时钟的时间，平时需注释掉
   Time t(2018, 02, 26, 22, 55, 35, Time::kSunday);
-  rtc.time(t);	// Set the time and date on the chip.
+  rtc.time(t);  // Set the time and date on the chip.
 }
 
 void loop()
@@ -64,13 +64,13 @@ void loop()
   // 以下获得实时时间
   //  Time t = rtc.time();
   //  // 时间按格式分拆
-  //  	Year = t.yr;
-  //  	Month = t.mon;
-  //  	Day = t.date;
-  //  	Hour = t.hr;
-  //Hour = Hour - 8;	//换算到UTC时间，这里可能会有问题
-  //  	Minute = t.min;
-  //  	Second = t.sec;
+  //    Year = t.yr;
+  //    Month = t.mon;
+  //    Day = t.date;
+  //    Hour = t.hr;
+  //Hour = Hour - 8;  //换算到UTC时间，这里可能会有问题
+  //    Minute = t.min;
+  //    Second = t.sec;
   Year = 2018;
   Month = 2;
   Day = 19;
@@ -86,64 +86,84 @@ void loop()
   Siderial_Time = 18.697374558 + 24.06570982441908 * (JD - 2451545.0);
   // 本地恒星时(-1!!!!!!)
   Siderial_Time_Local = fmod(Siderial_Time + (-1)*GPS_Longitude / 15,24);
-  // if (Siderial_Time_Local < -24)
-  // {
-  //   Siderial_Time_Local = 24 + abs(Siderial_Time_Local) + Siderial_Time_Local;
-  // }
-  // if (Siderial_Time_Local < 0 && Siderial_Time_Local > -24)
-  // {
-  //   Siderial_Time_Local = 24.0 - abs(Siderial_Time_Local);
-  // }
-  // if (Siderial_Time_Local > 24.0)
-  // {
-  //   Siderial_Time_Local = (Siderial_Time_Local - floor(Siderial_Time_Local)) + int(Siderial_Time_Local) % 24;
-  // }
   // Serial.print(JD);
   // Serial.print("\t");
   // Serial.print(MJD);
   // Serial.print("\t");
-   Serial.println(Siderial_Time_Local);
+  // Serial.print(int(Siderial_Time_Local));
+  // Serial.println(int(int(fmod(Siderial_Time_Local, 1) * 60)));
 
   //编码器部分
-  //Encoder_Azimuth_Position = Encoder_Azimuth.read();
+//Encoder_Azimuth_Position = Encoder_Azimuth.read();
   //Encoder_Altitude_Position = Encoder_Altitude.read();
-Encoder_Altitude_Position=0;
-//   //Encoder_Altitude_Position=787;
-// Encoder_Altitude_Position=1057;//80度
+ Encoder_Altitude_Position=400;
+// Encoder_Altitude_Position=787;
+//Encoder_Altitude_Position=600;//45度
+for(Encoder_Azimuth_Position=0;Encoder_Azimuth_Position<=4800;Encoder_Azimuth_Position++)
+{
 
-  //往哪个方向？！！！
-  for(Encoder_Azimuth_Position = 0;Encoder_Azimuth_Position<4800;Encoder_Azimuth_Position++)
-  {
+
   // 任一编码器数值变动时，打印出当前两个编码器的数值；
-  if ((Encoder_Azimuth_Position != Encoder_Azimuth_oldPosition) || (Encoder_Azimuth_Position != Encoder_Altitude_oldPosition))
-  {
-    Encoder_Azimuth_oldPosition = Encoder_Azimuth_Position;
-    Encoder_Altitude_oldPosition = Encoder_Altitude_Position;
-        Serial.print("Azimuth Value: \t");
-        Serial.print(Encoder_Azimuth_Position);
-        // Serial.print("\t Altitude Value: \t");
+//  if ((Encoder_Azimuth_Position != Encoder_Azimuth_oldPosition) || (Encoder_Azimuth_Position != Encoder_Altitude_oldPosition))
+//  {
+//    Encoder_Azimuth_oldPosition = Encoder_Azimuth_Position;
+ //   Encoder_Altitude_oldPosition = Encoder_Altitude_Position;
+        Serial.print("Azimuth: ");
+        Serial.print(fmod(Encoder_Azimuth_Position,4800));
+                Serial.print("  ");
+        // // Serial.print("\t Altitude Value: \t");
         // Serial.print(Encoder_Altitude_Position);
-  }
+ // }
   
-  Encoder_Azimuth_Radian = ((abs(Encoder_Azimuth_Position) % 4800) * 360.0 / 4800) * 2 * PI / 360;
-  Encoder_Altitude_Radian = ((abs(Encoder_Altitude_Position) % 4800) * 360.0 / 4800) * 2 * PI / 360;
-  // Serial.print("\t");
-  // Serial.println(Encoder_Azimuth_Radian);
-  //Serial.print("\t");
-  //Serial.println(Encoder_Altitude_Radian);
+  Encoder_Azimuth_Radian = (fmod(Encoder_Azimuth_Position,4800) * 360.0 / 4800) * 2.0 * PI / 360;
+  Encoder_Altitude_Radian = (fmod(Encoder_Altitude_Position,4800) * 360.0 / 4800) * 2.0 * PI / 360;
+        //   Serial.print("Azi:  ");
+        // Serial.print(fmod(Encoder_Azimuth_Position,4800));
+  //       Serial.print("  Alt:  ");
+  //       Serial.print(Encoder_Altitude_Position);
+  // Serial.print("  ");
+  // Serial.print(Encoder_Azimuth_Radian);
+  // Serial.print(" Alt_radian  ");
+  // Serial.print(Encoder_Altitude_Radian);
+  // Serial.print(" ");
 
   // 计算赤经
-  Astro_HUD_RA = Siderial_Time_Local - atan(sin(Encoder_Azimuth_Radian) / (cos(Encoder_Azimuth_Radian) * sin(GPS_Latitude * (2 * PI / 360)) - tan(Encoder_Altitude_Radian) * cos(GPS_Latitude * (2 * PI / 360)))) * 180 / (PI * 15);
+  //Astro_HUD_RA = Siderial_Time_Local - atan(sin(Encoder_Azimuth_Radian) / (cos(Encoder_Azimuth_Radian) * sin(GPS_Latitude * (2 * PI / 360)) - tan(Encoder_Altitude_Radian) * cos(GPS_Latitude * (2 * PI / 360)))) * 180 / (PI * 15);
+  
+//  Astro_HUD_RA = Siderial_Time_Local - atan2(sin(GPS_Latitude * (2 * PI / 360))*cos(Encoder_Altitude_Radian)*cos(Encoder_Azimuth_Radian)+cos(GPS_Latitude * (2 * PI / 360))*sin(Encoder_Altitude_Radian),cos(Encoder_Altitude_Radian)*sin(Encoder_Azimuth_Radian))*180.0/(PI*15);
+    Astro_HUD_RA =Siderial_Time_Local - atan2(cos(Encoder_Altitude_Radian)*sin(Encoder_Azimuth_Radian),sin(GPS_Latitude * (2 * PI / 360))*cos(Encoder_Altitude_Radian)*cos(Encoder_Azimuth_Radian)+cos(GPS_Latitude * (2 * PI / 360))*sin(Encoder_Altitude_Radian))*180.0/(PI*15);
+
   //  // 计算赤纬δ = 赤纬。天赤道以北为正，以南为负。
-  Astro_HUD_DEC = asin(sin(GPS_Latitude * 2 * PI / 360) * sin(Encoder_Altitude_Radian) - cos(GPS_Latitude * (2 * PI / 360)) * cos(Encoder_Altitude_Radian) * cos(Encoder_Azimuth_Radian)) * 360 / (2 * PI);
+  Astro_HUD_DEC = asin(sin(GPS_Latitude * 2 * PI / 360) * sin(Encoder_Altitude_Radian) - cos(GPS_Latitude * (2 * PI / 360)) * cos(Encoder_Altitude_Radian) * cos(Encoder_Azimuth_Radian)) * 360.0 / (2 * PI);
+        Serial.print("\t RA-RAW: \t");
+      Serial.print(Astro_HUD_RA);
+  
+  if(Encoder_Azimuth_Radian>PI/2 && Encoder_Azimuth_Radian<PI)
+  {Astro_HUD_RA=fmod(Astro_HUD_RA+24,24);}
+
+
     Serial.print("\t RA:\t");
       Serial.print(Astro_HUD_RA);
- 
-  
-  //Serial.print("\t RA in Degree: \t");
-  //Serial.print(Astro_HUD_RA * 15);
+  // Serial.print("\t RA in Degree: \t");
+  // Serial.print(Astro_HUD_RA * 15);
     Serial.print("\t DEC: \t");
-    Serial.println(Astro_HUD_DEC);
+    Serial.print(Astro_HUD_DEC);
+ /*
+ 进行反向运算
+ 地平经度 A=arctan(sin(时角)/(cos(时角)*sin(纬度)-tan(赤纬)*cos(纬度)))
+ 
+方位角A=-1.0*atan2(cos(赤纬)*sin(时角),-1.0*sin(纬度)*cos(赤纬)*cos(时角)+cos(纬度)*sin(赤纬))
+高度角a=asin(sin(纬度)*sin(赤纬)+cos(纬度)*cos(赤纬)*cos(时角))
+ */
+
+ float jingdu=180-1.0*atan2(cos(Astro_HUD_DEC*2*PI/360)*sin((Siderial_Time_Local-Astro_HUD_RA)*15.0*2*PI/360),-1.0*sin(GPS_Latitude * 2 * PI / 360)*cos(Astro_HUD_DEC*2*PI/360)*cos((Siderial_Time_Local-Astro_HUD_RA)*15.0*2*PI/360)+cos(GPS_Latitude * 2 * PI / 360)*sin(Astro_HUD_DEC*2*PI/360))*360/(2*PI);
+ float weidu= fmod(asin(sin(GPS_Latitude * 2 * PI / 360)*sin(Astro_HUD_DEC*2*PI/360)+cos(GPS_Latitude * 2 * PI / 360)*cos(Astro_HUD_DEC*2*PI/360)*cos((Siderial_Time_Local-Astro_HUD_RA)*15.0*2*PI/360))*360.0/(2*PI),360);
+  Serial.print("\t JINGDU: ");
+  Serial.print(fmod(jingdu,360.0));
+    Serial.print("\t WEIDU: ");
+  Serial.println(weidu);
+  
+ 
 
   // 以下获取赤经、赤纬的独立显示值
   Mod_RA_HH = int(Astro_HUD_RA);
@@ -169,59 +189,59 @@ Encoder_Altitude_Position=0;
 
   // 读取Stellarium数据
  
-//     while (Serial.available() > 0)
-//     {
-//     inChar = Serial.read();
-//     Stellarium += String(inChar);
-//     delay(5);
-//     }
-//     // 向Stellarium传送RA赤经值
-//     if (Stellarium == "#:GR#")
-//     {
-//     if (Mod_RA_HH < 10)
-//     {
-//       Serial.print("0");
-//     }
-//     Serial.print(Mod_RA_HH);
-//     Serial.print(":");
-//     if (Mod_RA_MM < 10)
-//     {
-//       Serial.print("0");
-//     }
-//     Serial.print(Mod_RA_MM);
-//     Serial.print(":00#");
-//     Stellarium = "";
-//     }
-//     // 向Stellarium传送DEC赤纬值
-//     if (Stellarium == "#:GD#")
-//     {
-//     if ((Mod_DEC_DD >= 0 && Mod_DEC_DD < 10))
-//     {
-//       Serial.print("+0");
-//       Serial.print(Mod_DEC_DD);
-//     }
-//     else if (Mod_DEC_DD >= 10)
-//     {
-//       Serial.print("+");
-//       Serial.print(Mod_DEC_DD);
-//     }
-//     else if ((Mod_DEC_DD < 0) && abs(Mod_DEC_DD) < 10)
-//     {
-//       Serial.print("-0");
-//       Serial.print(abs(Mod_DEC_DD));
-//     }
-//     else
-//     {
-//       Serial.print(Mod_DEC_DD);
-//     }
-//     Serial.print("*");
-//     if (Mod_DEC_MM < 10)
-//     {
-//       Serial.print("0");
-//     }
-//     Serial.print(Mod_DEC_MM);
-//     Serial.print(":00#");
-//     Stellarium = "";
-//     }
+    // while (Serial.available() > 0)
+    // {
+    // inChar = Serial.read();
+    // Stellarium += String(inChar);
+    // delay(5);
+    // }
+    // // 向Stellarium传送RA赤经值
+    // if (Stellarium == "#:GR#")
+    // {
+    // if (Mod_RA_HH < 10)
+    // {
+    //   Serial.print("0");
+    // }
+    // Serial.print(Mod_RA_HH);
+    // Serial.print(":");
+    // if (Mod_RA_MM < 10)
+    // {
+    //   Serial.print("0");
+    // }
+    // Serial.print(Mod_RA_MM);
+    // Serial.print(":00#");
+    // Stellarium = "";
+    // }
+    // // 向Stellarium传送DEC赤纬值
+    // if (Stellarium == "#:GD#")
+    // {
+    // if ((Mod_DEC_DD >= 0 && Mod_DEC_DD < 10))
+    // {
+    //   Serial.print("+0");
+    //   Serial.print(Mod_DEC_DD);
+    // }
+    // else if (Mod_DEC_DD >= 10)
+    // {
+    //   Serial.print("+");
+    //   Serial.print(Mod_DEC_DD);
+    // }
+    // else if ((Mod_DEC_DD < 0) && abs(Mod_DEC_DD) < 10)
+    // {
+    //   Serial.print("-0");
+    //   Serial.print(abs(Mod_DEC_DD));
+    // }
+    // else
+    // {
+    //   Serial.print(Mod_DEC_DD);
+    // }
+    // Serial.print("*");
+    // if (Mod_DEC_MM < 10)
+    // {
+    //   Serial.print("0");
+    // }
+    // Serial.print(Mod_DEC_MM);
+    // Serial.print(":00#");
+    // Stellarium = "";
+    // }
 }
 }

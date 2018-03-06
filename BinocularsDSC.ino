@@ -4,8 +4,14 @@
 #include "math.h"
 
 // 定义两个编码器
-Encoder Encoder_Azimuth(2, 3);
-Encoder Encoder_Altitude(4, 5);
+Encoder Encoder_Azimuth(4, 5);
+Encoder Encoder_Altitude(2, 3);
+//原始分辨率
+const int Encoder_Azimuth_Resolution=1200;
+const int Encoder_Altitude_Resolution=1200;
+//原始分辨率-数据
+int Encoder_Azimuth_PPR=Encoder_Azimuth_Resolution*4;
+int Encoder_Altitude_PPR=Encoder_Altitude_Resolution*4;
 //编码器数值，前一次
 long Encoder_Azimuth_oldPosition = -999;
 long Encoder_Altitude_oldPosition = -999;
@@ -94,10 +100,13 @@ void loop()
   // Serial.println(int(int(fmod(Siderial_Time_Local, 1) * 60)));
 
   //编码器部分
-  Encoder_Azimuth_Position=Encoder_Azimuth.read();;
+//  Encoder_Azimuth_Position=Encoder_Azimuth.read();
+  Encoder_Azimuth_Position=0;
   Encoder_Altitude_Position= Encoder_Altitude.read();
-  Encoder_Azimuth_Radian = (fmod(Encoder_Azimuth_Position,4800) * 360.0 / 4800) * 2.0 * PI / 360;
-  Encoder_Altitude_Radian = (fmod(Encoder_Altitude_Position,4800) * 360.0 / 4800) * 2.0 * PI / 360;
+      // Serial.print("Encoder_Altitude_Position:");
+      //       Serial.println(Encoder_Altitude_Position);
+  Encoder_Azimuth_Radian = (fmod(Encoder_Azimuth_Position,Encoder_Azimuth_PPR) * 360.0 / Encoder_Azimuth_PPR) * 2.0 * PI / 360;
+  Encoder_Altitude_Radian = (fmod(Encoder_Altitude_Position,Encoder_Altitude_PPR) * 360.0 / Encoder_Altitude_PPR) * 2.0 * PI / 360;
 
   // 计算赤经
     Astro_HUD_RA =Siderial_Time_Local - atan2(cos(Encoder_Altitude_Radian)*sin(Encoder_Azimuth_Radian),sin(GPS_Latitude * (2 * PI / 360))*cos(Encoder_Altitude_Radian)*cos(Encoder_Azimuth_Radian)+cos(GPS_Latitude * (2 * PI / 360))*sin(Encoder_Altitude_Radian))*180.0/(PI*15);
@@ -128,18 +137,18 @@ void loop()
   Mod_DEC_SS = int((abs(Astro_HUD_DEC) - abs(Mod_DEC_DD) - Mod_DEC_MM / 60) * 60);
 
   // 串口输出方位角、高度角等信息
-  //  Serial.print(Mod_RA_HH);
-  //  Serial.print(" h ");
-  //  Serial.print(Mod_RA_MM);
-  //  Serial.print(" m ");
-  //  Serial.print(Mod_RA_SS);
-  //  Serial.print(" s");
-  //  Serial.print(Mod_DEC_DD);
-  //  Serial.print(" d ");
-  //  Serial.print(Mod_DEC_MM);
-  //  Serial.print(" m ");
-  //  Serial.print(Mod_DEC_SS);
-  //  Serial.print(" s");
+    // Serial.print(Mod_RA_HH);
+    // Serial.print(" h ");
+    // Serial.print(Mod_RA_MM);
+    // Serial.print(" m ");
+    // Serial.print(Mod_RA_SS);
+    // Serial.print(" s");
+    // Serial.print(Mod_DEC_DD);
+    // Serial.print(" d ");
+    // Serial.print(Mod_DEC_MM);
+    // Serial.print(" m ");
+    // Serial.print(Mod_DEC_SS);
+    // Serial.println(" s");
 
   // 读取Stellarium数据
  

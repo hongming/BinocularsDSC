@@ -1,3 +1,4 @@
+//Brightest Star Alignment
 // 引入各个库函数
 #include "Encoder.h"
 #include "DS1302.h"

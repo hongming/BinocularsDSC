@@ -1,15 +1,14 @@
-//Brightest Star Alignment
 // 引入各个库函数
 #include "Encoder.h"
 #include "DS1302.h"
 #include "math.h"
 
 // 定义两个编码器
-Encoder Encoder_Azimuth(4, 5);
-Encoder Encoder_Altitude(2, 3);
+Encoder Encoder_Altitude(5, 6);
+Encoder Encoder_Azimuth(7, 8);
 //原始分辨率
-const int Encoder_Azimuth_Resolution=1200;
-const int Encoder_Altitude_Resolution=1200;
+const int Encoder_Azimuth_Resolution=1000;
+const int Encoder_Altitude_Resolution=1000;
 //原始分辨率-数据
 int Encoder_Azimuth_PPR=Encoder_Azimuth_Resolution*4;
 int Encoder_Altitude_PPR=Encoder_Altitude_Resolution*4;
@@ -19,6 +18,8 @@ long Encoder_Altitude_oldPosition = -999;
 //编码器数值
 long Encoder_Azimuth_Position;
 long Encoder_Altitude_Position;
+long Encoder_Azimuth_Position_Offset=70;
+long Encoder_Altitude_Position_Offset=88;
 //编码器对应的方位弧度
 float Encoder_Azimuth_Radian;
 float Encoder_Altitude_Radian;
@@ -42,49 +43,57 @@ double Siderial_Time_Local;
 char inChar;
 String Stellarium = "";
 // RTC时间相关
-namespace
-{
-const int kCePin = 5; // Chip Enable
-const int kIoPin = 6; // Input/Output
-const int kSclkPin = 7; // Serial Clock
-DS1302 rtc(kCePin, kIoPin, kSclkPin);
-}
+// namespace
+// {
+// // const int kCePin = 5; // Chip Enable
+// // const int kIoPin = 6; // Input/Output
+// // const int kSclkPin = 7; // Serial Clock
+// // DS1302 rtc(kCePin, kIoPin, kSclkPin);
+// const int kCePin = 6; // Chip Enable
+// const int kIoPin = 7; // Input/Output
+// const int kSclkPin = 8; // Serial Clock
+// DS1302 rtc(kCePin, kIoPin, kSclkPin);
+// }
 
 void setup()
 {
   Serial.begin(9600);
   Serial.println("Binoculars Digital Setting Circle");
   // 输入观察者所在纬度、经度
-  GPS_Latitude = 31.0456;
+  GPS_Latitude = 31.222219;
   //Observer's longitude (λo) here is measured positively westward from the prime meridian; this is contrary to current IAU standards.https://en.wikipedia.org/wiki/Celestial_coordinate_system#Converting_coordinates
-  GPS_Longitude = -121.3997;
+  GPS_Longitude = -121.458055;
   // 启动RTC、设置时间
-  rtc.writeProtect(false);
-  rtc.halt(false);
-  //以下仅用于重置时钟的时间，平时需注释掉
-  Time t(2018, 02, 26, 22, 55, 35, Time::kSunday);
-  rtc.time(t);  // Set the time and date on the chip.
+  // rtc.writeProtect(false);
+  // rtc.halt(false);
+  // //以下仅用于重置时钟的时间，平时需注释掉
+  // Time t(2018, 02, 26, 22, 55, 35, Time::kSunday);
+  // rtc.time(t); // Set the time and date on the chip.
+  // pinMode(5,INPUT);
+  // pinMode(6,INPUT);
+  //   pinMode(7,INPUT);
+  //   pinMode(8,INPUT);
 }
 
 void loop()
 {
-  // 以下获得实时时间
-  //  Time t = rtc.time();
-  //  // 时间按格式分拆
-  //    Year = t.yr;
-  //    Month = t.mon;
-  //    Day = t.date;
-  //    Hour = t.hr;
-  //Hour = Hour - 8;  //换算到UTC时间，这里可能会有问题
-  //    Minute = t.min;
-  //    Second = t.sec;
+  // // 以下获得实时时间
+  // //  Time t = rtc.time();
+  // //  // 时间按格式分拆
+  // //   Year = t.yr;
+  // //   Month = t.mon;
+  // //   Day = t.date;
+  // //   Hour = t.hr;
+  // //Hour = Hour - 8; //换算到UTC时间，这里可能会有问题
+  // //   Minute = t.min;
+  // //   Second = t.sec;
   Year = 2018;
-  Month = 2;
-  Day = 19;
-  Hour = 20;
+  Month = 3;
+  Day = 14;
+  Hour =0;
   Hour = Hour - 8;  //换算到UTC时间，这里可能会有问题
-  Minute = 20;
-  Second = 10;
+  Minute = 30;
+  Second = 0;
 
   // 儒略日，计算采用Navy.mil的计算试试看
   JD = 367 * Year - int((7 * (Year + int((Month + 9) / 12))) / 4) + int((275 * Month) / 9) + Day + 1721013.5 + Hour / 24 + Minute / 1440 + Second / 86400 - 0.5 * ((((100 * Year + Month - 190002.5) > 0) - ((100 * Year + Month - 190002.5) < 0))) + 0.5;
@@ -101,11 +110,14 @@ void loop()
   // Serial.println(int(int(fmod(Siderial_Time_Local, 1) * 60)));
 
   //编码器部分
-//  Encoder_Azimuth_Position=Encoder_Azimuth.read();
-  Encoder_Azimuth_Position=0;
-  Encoder_Altitude_Position= Encoder_Altitude.read();
-      // Serial.print("Encoder_Altitude_Position:");
-      //       Serial.println(Encoder_Altitude_Position);
+  Encoder_Azimuth_Position=Encoder_Azimuth.read()+Encoder_Azimuth_Position_Offset;
+  Encoder_Altitude_Position= Encoder_Altitude.read()+Encoder_Altitude_Position_Offset;
+  //   Encoder_Azimuth_Position=637;
+  // Encoder_Altitude_Position= 191;
+/*      Serial.print("Encoder_Azimuth_Position:");
+            Serial.print(Encoder_Azimuth_Position);
+                Serial.print("\t Encoder_Altitude_Position:");
+            Serial.println(Encoder_Altitude_Position);*/
   Encoder_Azimuth_Radian = (fmod(Encoder_Azimuth_Position,Encoder_Azimuth_PPR) * 360.0 / Encoder_Azimuth_PPR) * 2.0 * PI / 360;
   Encoder_Altitude_Radian = (fmod(Encoder_Altitude_Position,Encoder_Altitude_PPR) * 360.0 / Encoder_Altitude_PPR) * 2.0 * PI / 360;
 
@@ -116,19 +128,18 @@ void loop()
   Astro_HUD_DEC = asin(sin(GPS_Latitude * 2 * PI / 360) * sin(Encoder_Altitude_Radian) - cos(GPS_Latitude * (2 * PI / 360)) * cos(Encoder_Altitude_Radian) * cos(Encoder_Azimuth_Radian)) * 360.0 / (2 * PI);
   if(Encoder_Azimuth_Radian>PI/2 && Encoder_Azimuth_Radian<PI)
   {Astro_HUD_RA=fmod(Astro_HUD_RA+24,24);}
- /*
- 进行反向运算
+/*
+进行反向运算
 方位角A=-1.0*atan2(cos(赤纬)*sin(时角),-1.0*sin(纬度)*cos(赤纬)*cos(时角)+cos(纬度)*sin(赤纬))
 高度角a=asin(sin(纬度)*sin(赤纬)+cos(纬度)*cos(赤纬)*cos(时角))
- */
-
- float jingdu=180-1.0*atan2(cos(Astro_HUD_DEC*2*PI/360)*sin((Siderial_Time_Local-Astro_HUD_RA)*15.0*2*PI/360),-1.0*sin(GPS_Latitude * 2 * PI / 360)*cos(Astro_HUD_DEC*2*PI/360)*cos((Siderial_Time_Local-Astro_HUD_RA)*15.0*2*PI/360)+cos(GPS_Latitude * 2 * PI / 360)*sin(Astro_HUD_DEC*2*PI/360))*360/(2*PI);
- float weidu= fmod(asin(sin(GPS_Latitude * 2 * PI / 360)*sin(Astro_HUD_DEC*2*PI/360)+cos(GPS_Latitude * 2 * PI / 360)*cos(Astro_HUD_DEC*2*PI/360)*cos((Siderial_Time_Local-Astro_HUD_RA)*15.0*2*PI/360))*360.0/(2*PI),360);
-  // Serial.print("\t JINGDU: ");
-  // Serial.print(fmod(jingdu,360.0));
-  //   Serial.print("\t WEIDU: ");
-  // Serial.println(weidu);
-
+float jingdu=180-1.0*atan2(cos(Astro_HUD_DEC*2*PI/360)*sin((Siderial_Time_Local-Astro_HUD_RA)*15.0*2*PI/360),-1.0*sin(GPS_Latitude * 2 * PI / 360)*cos(Astro_HUD_DEC*2*PI/360)*cos((Siderial_Time_Local-Astro_HUD_RA)*15.0*2*PI/360)+cos(GPS_Latitude * 2 * PI / 360)*sin(Astro_HUD_DEC*2*PI/360))*360/(2*PI);
+float weidu= fmod(asin(sin(GPS_Latitude * 2 * PI / 360)*sin(Astro_HUD_DEC*2*PI/360)+cos(GPS_Latitude * 2 * PI / 360)*cos(Astro_HUD_DEC*2*PI/360)*cos((Siderial_Time_Local-Astro_HUD_RA)*15.0*2*PI/360))*360.0/(2*PI),360);
+  Serial.print("\t JINGDU: ");
+  Serial.print(fmod(jingdu,360.0));
+    Serial.print("\t WEIDU: ");
+  Serial.print(weidu);
+    Serial.print('\t');
+*/
   // 以下获取赤经、赤纬的独立显示值
   Mod_RA_HH = int(Astro_HUD_RA);
   Mod_RA_MM = int(fmod(Astro_HUD_RA, 1) * 60);

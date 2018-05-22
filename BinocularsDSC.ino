@@ -18,8 +18,13 @@ long Encoder_Altitude_oldPosition = -999;
 //编码器数值
 long Encoder_Azimuth_Position;
 long Encoder_Altitude_Position;
-long Encoder_Azimuth_Position_Offset=70;
-long Encoder_Altitude_Position_Offset=88;
+//定义多少次读取一次时间和修正值
+int DSC_Offset_Count=1000;
+//数值修正电位器
+long Encoder_Azimuth_Position_Offset_Pin=A0; 
+long Encoder_Altitude_Position_Offset_Pin=A1;
+long Encoder_Azimuth_Position_Offset=0; 
+long Encoder_Altitude_Position_Offset=0;
 //编码器对应的方位弧度
 float Encoder_Azimuth_Radian;
 float Encoder_Altitude_Radian;
@@ -69,24 +74,35 @@ void setup()
   // //以下仅用于重置时钟的时间，平时需注释掉
   // Time t(2018, 02, 26, 22, 55, 35, Time::kSunday);
   // rtc.time(t); // Set the time and date on the chip.
-  // pinMode(5,INPUT);
-  // pinMode(6,INPUT);
-  //   pinMode(7,INPUT);
-  //   pinMode(8,INPUT);
+  pinMode(5,INPUT);
+  pinMode(6,INPUT);
+  pinMode(7,INPUT);
+  pinMode(8,INPUT);
 }
 
 void loop()
 {
-  // // 以下获得实时时间
-  // //  Time t = rtc.time();
-  // //  // 时间按格式分拆
-  // //   Year = t.yr;
-  // //   Month = t.mon;
-  // //   Day = t.date;
-  // //   Hour = t.hr;
-  // //Hour = Hour - 8; //换算到UTC时间，这里可能会有问题
-  // //   Minute = t.min;
-  // //   Second = t.sec;
+
+
+/*计划变更：
+循环一定次数后，查询时间和外部电位器的数值
+if(DSC_Offset_Count>0){
+  DSC_Offset_Count--;
+}
+else{
+Encoder_Azimuth_Position_Offset=map(analogRead(Encoder_Azimuth_Position_Offset_Pin),0,1023,-512,511);
+Encoder_Altitude_Position_Offset=map(analogRead(Encoder_Altitude_Position_Offset),0,1023,-512,522);
+   Time t = rtc.time();
+   // 时间按格式分拆
+    Year = t.yr;
+    Month = t.mon;
+    Day = t.date;
+    Hour = t.hr;
+  Hour = Hour - 8; //换算到UTC时间，这里可能会有问题
+    Minute = t.min;
+    Second = t.sec;}
+*/
+
   Year = 2018;
   Month = 3;
   Day = 14;
@@ -109,15 +125,18 @@ void loop()
   // Serial.print(int(Siderial_Time_Local));
   // Serial.println(int(int(fmod(Siderial_Time_Local, 1) * 60)));
 
+
+
   //编码器部分
   Encoder_Azimuth_Position=Encoder_Azimuth.read()+Encoder_Azimuth_Position_Offset;
   Encoder_Altitude_Position= Encoder_Altitude.read()+Encoder_Altitude_Position_Offset;
-  //   Encoder_Azimuth_Position=637;
-  // Encoder_Altitude_Position= 191;
-/*      Serial.print("Encoder_Azimuth_Position:");
-            Serial.print(Encoder_Azimuth_Position);
-                Serial.print("\t Encoder_Altitude_Position:");
-            Serial.println(Encoder_Altitude_Position);*/
+
+/*
+  Serial.print("Encoder_Azimuth_Position:");
+  Serial.print(Encoder_Azimuth_Position);
+  Serial.print("\t Encoder_Altitude_Position:");
+  Serial.println(Encoder_Altitude_Position);
+*/
   Encoder_Azimuth_Radian = (fmod(Encoder_Azimuth_Position,Encoder_Azimuth_PPR) * 360.0 / Encoder_Azimuth_PPR) * 2.0 * PI / 360;
   Encoder_Altitude_Radian = (fmod(Encoder_Altitude_Position,Encoder_Altitude_PPR) * 360.0 / Encoder_Altitude_PPR) * 2.0 * PI / 360;
 
@@ -148,20 +167,21 @@ float weidu= fmod(asin(sin(GPS_Latitude * 2 * PI / 360)*sin(Astro_HUD_DEC*2*PI/3
   Mod_DEC_MM = int(fmod(abs(Astro_HUD_DEC), 1) * 60);
   Mod_DEC_SS = int((abs(Astro_HUD_DEC) - abs(Mod_DEC_DD) - Mod_DEC_MM / 60) * 60);
 
-  // 串口输出方位角、高度角等信息
-    // Serial.print(Mod_RA_HH);
-    // Serial.print(" h ");
-    // Serial.print(Mod_RA_MM);
-    // Serial.print(" m ");
-    // Serial.print(Mod_RA_SS);
-    // Serial.print(" s");
-    // Serial.print(Mod_DEC_DD);
-    // Serial.print(" d ");
-    // Serial.print(Mod_DEC_MM);
-    // Serial.print(" m ");
-    // Serial.print(Mod_DEC_SS);
-    // Serial.println(" s");
-
+/*
+  串口输出方位角、高度角等信息
+    Serial.print(Mod_RA_HH);
+    Serial.print(" h ");
+    Serial.print(Mod_RA_MM);
+    Serial.print(" m ");
+    Serial.print(Mod_RA_SS);
+    Serial.print(" s");
+    Serial.print(Mod_DEC_DD);
+    Serial.print(" d ");
+    Serial.print(Mod_DEC_MM);
+    Serial.print(" m ");
+    Serial.print(Mod_DEC_SS);
+    Serial.println(" s");
+*/
   // 读取Stellarium数据
  
     while (Serial.available() > 0)
